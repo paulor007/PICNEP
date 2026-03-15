@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     BASE_DIR: Path = Path(__file__).parent.parent
     DATA_DIR: Path = Path(__file__).parent.parent / "data"
 
-    class config:
+    class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
 
