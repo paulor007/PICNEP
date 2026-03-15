@@ -1,0 +1,19 @@
+# docker-compose.yml
+# Roda PostgreSQL sem instalar na máquina.
+# Uso: docker-compose up -d (inicia) / docker-compose down (para)
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: picnep_db
+    environment:
+      POSTGRES_USER: picnep
+      POSTGRES_PASSWORD: picnep123
+      POSTGRES_DB: picnep
+    ports:
+      - "5432:5432"
+    volumes:
+      - picnep_data:/var/lib/postgresql/data
+
+volumes:
+  picnep_data:

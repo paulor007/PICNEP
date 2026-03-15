@@ -1,0 +1,11 @@
+venv/
+__pycache__/
+*.pyc
+.env
+*.db
+.pytest_cache/
+alembic/versions/*.py
+!alembic/versions/.gitkeep
+output/
+logs/
+.DS_Store
