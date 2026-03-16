@@ -21,6 +21,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import settings
+from api.routes.suppliers import router as suppliers_router
+from api.routes.items import router as items_router
 
 app = FastAPI(
     title="PICNEP",
@@ -28,7 +30,7 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS (permite frontend acessar a API)
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Em produção, restringir
@@ -37,6 +39,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ── Registrar rotas ──
+app.include_router(suppliers_router)
+app.include_router(items_router)
 
 @app.get("/")
 def root():
@@ -49,7 +54,7 @@ def root():
     }
 
 
-@app.get("/health")
+@app.get("/health", tags=["Sistema"])
 def health():
     """Health check — usado por monitoramento e deploy."""
     return {"status": "ok"}
