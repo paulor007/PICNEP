@@ -20,20 +20,20 @@ CRUD = Create, Read, Update, Delete
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from api.deps import get_db
+from api.deps import get_db, get_current_user, require_role
+from models.user import User
 from models.supplier import Supplier
 from schemas.supplier import SupplierCreate, SupplierUpdate, SupplierResponse
 
 router = APIRouter(prefix="/api/v1/suppliers", tags=["Fornecedores"])
 
 @router.post("/", response_model=SupplierResponse, status_code=201)
-def create_supplier(data: SupplierCreate, db: Session = Depends(get_db)):
-    """
-    Cadastra novo fornecedor.
-
-    O FastAPI valida 'data' automaticamente com SupplierCreate.
-    Se faltar campo obrigatório ou tipo errado → 422 automático.
-    """
+def create_supplier(
+    data: SupplierCreate, 
+    db: Session = Depends(get_db),
+    user: User = Depends(require_role("admin", "gestor")),  # ← PROTEGIDO
+):
+    """Cadastra novo fornecedor. Requer: admin ou gestor."""
     supplier = Supplier(**data.model_dump())
     db.add(supplier)
     db.commit()
@@ -42,19 +42,13 @@ def create_supplier(data: SupplierCreate, db: Session = Depends(get_db)):
 
 @router.get("/", response_model=list[SupplierResponse])
 def list_suppliers(
-    skip: int = Query(0, ge=0, description="Pular N registros"),
-    limit: int = Query(50, ge=1, le=100, description="Máximo de registros"),
-    active_only: bool = Query(True, description="Apenas ativos"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    active_only: bool = Query(True),
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user), # ← Qualquer autenticado
 ):
-    """
-    Lista fornecedores com paginação.
-
-    Por que paginação?
-    - Se tiver 1000 fornecedores, retornar tudo é lento
-    - skip=0, limit=50 retorna os 50 primeiros
-    - skip=50, limit=50 retorna os próximos 50
-    """
+    """Lista fornecedores. Requer: autenticado."""
     query = db.query(Supplier)
     if active_only:
         query = query.filter(Supplier.is_active_(True))

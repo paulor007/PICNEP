@@ -21,6 +21,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import settings
+from api.auth.router import router as auth_router
 from api.routes.suppliers import router as suppliers_router
 from api.routes.items import router as items_router
 
@@ -40,6 +41,7 @@ app.add_middleware(
 )
 
 # ── Registrar rotas ──
+app.include_router(auth_router)
 app.include_router(suppliers_router)
 app.include_router(items_router)
 
@@ -56,5 +58,5 @@ def root():
 
 @app.get("/health", tags=["Sistema"])
 def health():
-    """Health check — usado por monitoramento e deploy."""
+    """Health check — usado por monitoramento."""
     return {"status": "ok"}
