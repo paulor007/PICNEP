@@ -26,6 +26,8 @@ from api.routes.suppliers import router as suppliers_router
 from api.routes.items import router as items_router
 from api.routes.quotes import router as quotes_router
 from api.routes.purchases import router as purchases_router
+from api.routes.analysis import router as analysis_router
+from api.routes.alerts import router as alerts_router
 
 app = FastAPI(
     title="PICNEP",
@@ -48,6 +50,8 @@ app.include_router(suppliers_router)
 app.include_router(items_router)
 app.include_router(quotes_router)
 app.include_router(purchases_router)
+app.include_router(analysis_router) 
+app.include_router(alerts_router)  
 
 @app.get("/")
 def root():
