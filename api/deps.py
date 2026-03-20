@@ -5,6 +5,7 @@ get_db: injeção de sessão do banco
 get_current_user: verifica JWT e retorna usuário autenticado
 require_role: verifica se usuário tem permissão suficiente
 """
+
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -15,10 +16,11 @@ from models.user import User
 
 # Define onde o FastAPI espera o token (header Authorization: Bearer <token>)
 # tokenUrl é a URL do login (usada pelo botão Authorize no Swagger)
-oauth2_schema = OAuth2PasswordBearer(tokenUrl="/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
+
 
 def get_current_user(
-    token: str = Depends(oauth2_schema),
+    token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
 ) -> User:
     """
@@ -44,11 +46,11 @@ def get_current_user(
             detail="Token inválido ou expirado",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     email: str = payload.get("sub")
     if email is None:
-      raise HTTPException(status_code=401, detail="Token sem identificação")
-    
+        raise HTTPException(status_code=401, detail="Token sem identificação")
+
     user = db.query(User).filter(User.email == email).first()
     if user is None:
         raise HTTPException(status_code=401, detail="Usuário não encontrado")
@@ -57,6 +59,7 @@ def get_current_user(
         raise HTTPException(status_code=403, detail="Conta desativada")
 
     return user
+
 
 def require_role(*allowed_roles: str):
     """
@@ -80,4 +83,5 @@ def require_role(*allowed_roles: str):
         return user
     return role_checker
 
-__all__ = ["get_db", "get_current_user", "require_role", "oauth2_schema"]
+
+__all__ = ["get_db", "get_current_user", "require_role", "oauth2_scheme"]

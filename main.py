@@ -24,6 +24,8 @@ from core.config import settings
 from api.auth.router import router as auth_router
 from api.routes.suppliers import router as suppliers_router
 from api.routes.items import router as items_router
+from api.routes.quotes import router as quotes_router
+from api.routes.purchases import router as purchases_router
 
 app = FastAPI(
     title="PICNEP",
@@ -44,6 +46,8 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(suppliers_router)
 app.include_router(items_router)
+app.include_router(quotes_router)
+app.include_router(purchases_router)
 
 @app.get("/")
 def root():

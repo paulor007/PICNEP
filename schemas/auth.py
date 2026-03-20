@@ -11,6 +11,7 @@ Por que schemas separados para auth?
 from datetime import datetime
 from pydantic import BaseModel, Field
 
+
 class RegisterRequest(BaseModel):
     """Dados para criar conta."""
     name: str = Field(..., min_length=2, max_length=100, examples=["Paulo Lavarini"])
@@ -18,10 +19,12 @@ class RegisterRequest(BaseModel):
     password: str = Field(..., min_length=6, max_length=100, examples=["senha123"])
     role: str = Field("analista", examples=["admin", "gestor", "analista"])
 
+
 class LoginRequest(BaseModel):
     """Dados para fazer login."""
     email: str = Field(..., examples=["paulo@construtora.com"])
     password: str = Field(..., examples=["senha123"])
+
 
 class TokenResponse(BaseModel):
     """Resposta do login — token JWT."""
@@ -29,6 +32,7 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     role: str
     name: str
+
 
 class UserResponse(BaseModel):
     """Dados do usuário (sem senha)."""

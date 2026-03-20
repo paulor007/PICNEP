@@ -32,17 +32,20 @@ from core.config import settings
 # deprecated="auto": atualiza hashes antigos automaticamente
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+
 def hash_password(password: str) -> str:
     """Transforma senha em hash bcrypt (irreversível)."""
     return pwd_context.hash(password)
+
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Compara senha digitada com hash do banco. Retorna True/False."""
     return pwd_context.verify(plain_password, hashed_password)
 
+
 # ── JWT ──
 
-def creat_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """
     Gera token JWT com dados e expiração.
 
@@ -57,7 +60,7 @@ def creat_access_token(data: dict, expires_delta: timedelta | None = None) -> st
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta (
+        expire = datetime.now(timezone.utc) + timedelta(
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
 
@@ -68,6 +71,7 @@ def creat_access_token(data: dict, expires_delta: timedelta | None = None) -> st
         algorithm=settings.ALGORITHM,
     )
     return encoded_jwt
+
 
 def decode_access_token(token: str) -> dict | None:
     """
@@ -85,4 +89,3 @@ def decode_access_token(token: str) -> dict | None:
         return payload
     except JWTError:
         return None
-

@@ -20,15 +20,17 @@ Fluxo de login:
   5. Retorna token
 """
 
+from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from api.deps import get_db
 from models.user import User
 from schemas.auth import RegisterRequest, LoginRequest, TokenResponse, UserResponse
-from core.security import hash_password, verify_password, creat_access_token
+from core.security import hash_password, verify_password, create_access_token
 
 router = APIRouter(prefix="/auth", tags=["Autenticação"])
+
 
 @router.post("/register", response_model=UserResponse, status_code=201)
 def register(data: RegisterRequest, db: Session = Depends(get_db)):
@@ -47,7 +49,7 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
             status_code=400,
             detail="Email já cadastrado"
         )
-    
+
     # Validar role
     valid_roles = {"admin", "gestor", "analista"}
     if data.role not in valid_roles:
@@ -55,7 +57,7 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
             status_code=400,
             detail=f"Role inválido. Use: {', '.join(valid_roles)}"
         )
-    
+
     # Criar usuário com senha hasheada
     user = User(
         name=data.name,
@@ -68,6 +70,25 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
     db.refresh(user)
 
     return user
+
+
+@router.post("/token", response_model=TokenResponse)
+def login_swagger(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
+):
+    """Login via formulário do Swagger (botão Authorize)."""
+    user = db.query(User).filter(User.email == form_data.username).first()
+
+    if not user or not verify_password(form_data.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Email ou senha incorretos")
+
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="Conta desativada")
+
+    token = create_access_token(data={"sub": user.email, "role": user.role})
+
+    return TokenResponse(access_token=token, role=user.role, name=user.name)
 
 @router.post("/login", response_model=TokenResponse)
 def login(data: LoginRequest, db: Session = Depends(get_db)):
@@ -90,15 +111,15 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
             status_code=401,
             detail="Email ou senha incorretos"
         )
-    
+
     if not user.is_active:
         raise HTTPException(
             status_code=403,
             detail="Conta desativada. Contate o administrador."
         )
-    
+
     # Gerar token
-    token = creat_access_token(
+    token = create_access_token(
         data={"sub": user.email, "role": user.role}
     )
 
