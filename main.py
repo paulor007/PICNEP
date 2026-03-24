@@ -22,6 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import settings
 from api.auth.router import router as auth_router
+from api.routes.users import router as user_router
 from api.routes.suppliers import router as suppliers_router
 from api.routes.items import router as items_router
 from api.routes.quotes import router as quotes_router
@@ -46,6 +47,7 @@ app.add_middleware(
 
 # ── Registrar rotas ──
 app.include_router(auth_router)
+app.include_router(user_router)
 app.include_router(suppliers_router)
 app.include_router(items_router)
 app.include_router(quotes_router)
