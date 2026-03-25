@@ -1,9 +1,54 @@
-item,fornecedor,preco_unitario,frete,prazo,quantidade,condicao
-Cimento CP-II 50kg,Materiais BH Ltda,48.50,150.00,5,100,30 dias
-Cimento CP-II 50kg,Constrular MG,52.00,0.00,3,100,a vista
-Cimento CP-II 50kg,DepMat Betim,46.90,200.00,7,100,28/56 dias
-Argamassa AC-III 20kg,Materiais BH Ltda,22.00,150.00,5,200,30 dias
-Argamassa AC-III 20kg,Constrular MG,24.50,0.00,3,200,a vista
-Brita n1 m3,DepMat Betim,95.00,80.00,2,50,a vista
-Bloco Ceramico 14x19x39,Materiais BH Ltda,1.85,120.00,5,2000,30 dias
-Bloco Ceramico 14x19x39,Constrular MG,1.92,0.00,3,2000,a vista
+from logging.config import fileConfig
+
+from sqlalchemy import engine_from_config, pool
+from alembic import context
+
+from core.config import settings
+from core.database import Base
+from models import User, Supplier, Item, Quote, Purchase, Alert  # noqa: F401
+
+config = context.config
+
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
+
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+
+target_metadata = Base.metadata
+
+
+def run_migrations_offline() -> None:
+    url = config.get_main_option("sqlalchemy.url")
+    context.configure(
+        url=url,
+        target_metadata=target_metadata,
+        literal_binds=True,
+        compare_type=True,
+    )
+
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+def run_migrations_online() -> None:
+    connectable = engine_from_config(
+        config.get_section(config.config_ini_section, {}),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
+
+    with connectable.connect() as connection:
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=True,
+        )
+
+        with context.begin_transaction():
+            context.run_migrations()
+
+
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    run_migrations_online()

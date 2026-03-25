@@ -1,15 +1,10 @@
 """
 Seed — Popula o banco com dados demo da Construtora Horizonte.
 
-Cria:
-- 2 usuários (admin demo + visitante demo)
-- 6 fornecedores de MG
-- 8 itens de construção
-- 30+ cotações
-- 15+ compras
-
 Roda: python data/seed.py
+Idempotente: pode rodar múltiplas vezes sem duplicar dados.
 """
+
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -24,20 +19,25 @@ from models.supplier import Supplier
 from models.item import Item
 from models.quote import Quote
 from models.purchase import Purchase
+from models.alert import Alert
 
-# Reproduzível
 random.seed(42)
 
 
 def seed():
     """Popula banco com dados demo."""
-    # Criar tabelas (se não existirem)
     Base.metadata.create_all(bind=engine)
 
     db = SessionLocal()
 
     try:
-        # Limpar dados antigos
+        # Verificar se já tem dados (idempotente)
+        existing_users = db.query(User).count()
+        if existing_users > 0:
+            print("⚠️  Banco já tem dados. Limpando para recriar...")
+
+        # Limpar dados antigos (ordem importa por foreign keys)
+        db.query(Alert).delete()
         db.query(Purchase).delete()
         db.query(Quote).delete()
         db.query(Item).delete()
@@ -62,7 +62,7 @@ def seed():
         ]
         db.add_all(users)
         db.flush()
-        print(f"✅ {len(users)} usuários criados")
+        print(f"  {len(users)} usuários criados")
 
         # ── FORNECEDORES ──
         fornecedores = [
@@ -81,7 +81,7 @@ def seed():
         ]
         db.add_all(fornecedores)
         db.flush()
-        print(f"✅ {len(fornecedores)} fornecedores criados")
+        print(f"  {len(fornecedores)} fornecedores criados")
 
         # ── ITENS ──
         itens = [
@@ -96,9 +96,9 @@ def seed():
         ]
         db.add_all(itens)
         db.flush()
-        print(f"✅ {len(itens)} itens criados")
+        print(f"  {len(itens)} itens criados")
 
-        # ── COTAÇÕES (48) ──
+        # ── COTAÇÕES ──
         precos_base = [48.0, 22.0, 95.0, 1.85, 8.50, 85.0, 320.0, 45.0]
 
         cotacoes = []
@@ -112,8 +112,8 @@ def seed():
                 dias_atras = random.randint(0, 60)
 
                 cotacoes.append(Quote(
-                    item_id=item.id,          # ← ID real, não hardcoded
-                    supplier_id=supplier.id,   # ← ID real
+                    item_id=item.id,
+                    supplier_id=supplier.id,
                     unit_price=preco,
                     freight=frete,
                     delivery_days=supplier.avg_delivery_days,
@@ -125,9 +125,9 @@ def seed():
 
         db.add_all(cotacoes)
         db.flush()
-        print(f"✅ {len(cotacoes)} cotações criadas")
+        print(f"  {len(cotacoes)} cotações criadas")
 
-        # ── COMPRAS (15+) ──
+        # ── COMPRAS ──
         compras = []
         for _ in range(18):
             item = random.choice(itens)
@@ -153,15 +153,16 @@ def seed():
 
         db.add_all(compras)
         db.commit()
-        print(f"✅ {len(compras)} compras criadas")
+        print(f"  {len(compras)} compras criadas")
 
-        print("\n🏗️ Banco populado com sucesso!")
-        print("   Usuários: paulo@construtora.com (admin) / demo@picnep.com (gestor)")
-        print("   Senhas: senha123 / demo123")
+        print("\n  Banco populado com sucesso!")
+        print("  Admin: paulo@construtora.com / senha123")
+        print("  Gestor: demo@picnep.com / demo123")
 
     except Exception as e:
         db.rollback()
-        print(f"❌ Erro: {e}")
+        print(f"  Erro: {e}")
+        raise
     finally:
         db.close()
 

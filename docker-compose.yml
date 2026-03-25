@@ -1,6 +1,6 @@
 # docker-compose.yml
-# Roda PostgreSQL sem instalar na máquina.
-# Uso: docker-compose up -d (inicia) / docker-compose down (para)
+# API + PostgreSQL. Uso: docker-compose up --build -d
+# Seed roda separado: docker exec picnep_api python data/seed.py
 
 services:
   db:
@@ -14,6 +14,26 @@ services:
       - "5432:5432"
     volumes:
       - picnep_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U picnep"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    container_name: picnep_api
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://picnep:picnep123@db:5432/picnep
+      SECRET_KEY: ${SECRET_KEY:-picnep-secret-key-prod}
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn main:app --host 0.0.0.0 --port 8000"
 
 volumes:
   picnep_data:
