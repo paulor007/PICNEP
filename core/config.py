@@ -13,10 +13,10 @@ class Settings(BaseSettings):
     """Configurações carregadas do .env com validação automática."""
 
     # Banco
-    DATABASE_URL: str = "postgresql://picnep:picnep123@localhost:5432/picnep"
+    DATABASE_URL: str = "postgresql://neondb_owner:npg_oT4I7tacuJBD@ep-lucky-credit-acetl9br.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 
     # JWT
-    SECRET_KEY: str = "dev-secret-key-troque-em-producao"
+    SECRET_KEY: str = "14F264kn@picnep.com"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
