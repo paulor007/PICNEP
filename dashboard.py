@@ -90,10 +90,13 @@ if not st.session_state.logged_in:
     col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
         st.subheader("Login")
-        email = st.text_input("Email", value="demo@picnep.com")
-        password = st.text_input("Senha", type="password", value="demo123")
 
-        if st.button("Entrar", type="primary", use_container_width=True):
+        with st.form("login_form"):
+            email = st.text_input("Email", value="demo@picnep.com")
+            password = st.text_input("Senha", type="password", value="demo123")
+            submitted = st.form_submit_button("Entrar", type="primary", use_container_width=True)
+
+        if submitted:
             success = False
 
             if API_AVAILABLE:

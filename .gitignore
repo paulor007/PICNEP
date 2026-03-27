@@ -4,7 +4,7 @@ __pycache__/
 .env
 *.db
 .pytest_cache/
-core/config.py
+core/config.pygit rm --cached core/config.py
 alembic/versions/*.py
 !alembic/versions/.gitkeep
 output/
