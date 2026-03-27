@@ -26,7 +26,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql://picnep:picnep123@db:5432/picnep
+      DATABASE_URL: postgresql://neondb_owner:npg_oT4I7tacuJBD@ep-lucky-credit-acetl9br.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
       SECRET_KEY: ${SECRET_KEY:-picnep-secret-key-prod}
     depends_on:
       db:
