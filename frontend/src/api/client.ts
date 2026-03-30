@@ -34,10 +34,12 @@ class ApiClient {
 
   async get<T>(endpoint: string): Promise<T | null> {
     try {
+      console.log(
+        `[API] GET ${endpoint} | Token: ${this.token ? "SIM" : "NÃO"}`,
+      );
       const res = await fetch(endpoint, { headers: this.headers() });
+      console.log(`[API] ${endpoint} → ${res.status}`);
       if (res.status === 401) {
-        this.clearToken();
-        window.location.href = "/login";
         return null;
       }
       if (!res.ok) return null;

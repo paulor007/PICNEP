@@ -1,65 +1,115 @@
-import { useAuth } from "../context/AuthContext";
-import { LogOut, Building2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import Card from "../components/ui/Card";
+import Loading from "../components/ui/Loading";
+import SupplierPieChart from "../components/charts/SupplierPieChart";
+import ItemBarChart from "../components/charts/ItemBarChart";
+import {
+  getSuppliers,
+  getItems,
+  getQuotes,
+  getPurchases,
+  getOpportunities,
+} from "../api/endpoints";
+import type { Supplier, Item, Quote, Purchase } from "../types";
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
+  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [economia, setEconomia] = useState(0);
+  const [oppCount, setOppCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      const [s, i, q, p, o] = await Promise.all([
+        getSuppliers(),
+        getItems(),
+        getQuotes(),
+        getPurchases(),
+        getOpportunities(),
+      ]);
+      setSuppliers(s || []);
+      setItems(i || []);
+      setQuotes(q || []);
+      setPurchases(p || []);
+      if (o && o.length > 0) {
+        setEconomia(
+          o.reduce((acc, opp) => acc + (opp.economia_potencial || 0), 0),
+        );
+        setOppCount(o.length);
+      }
+      setLoading(false);
+    }
+    fetchData();
+  }, []);
+
+  if (loading) return <Loading />;
 
   return (
-    <div className="min-h-screen bg-slate-950 p-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-600/20 flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-blue-500" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-white">PICNEP</h1>
-              <p className="text-slate-500 text-sm">Inteligência de Compras</p>
-            </div>
-          </div>
+    <div>
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-white">Visão Geral</h1>
+        <p className="text-slate-400 text-sm mt-1">
+          Custo Efetivo Total • Recomendações • Alertas
+        </p>
+      </div>
 
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-white text-sm font-medium">{user?.name}</p>
-              <p className="text-slate-500 text-xs">{user?.role}</p>
-            </div>
-            <button
-              onClick={logout}
-              className="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition"
-              title="Sair"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
+      {/* Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <Card
+          icon="🏭"
+          label="Fornecedores"
+          value={suppliers.length}
+          color="blue"
+        />
+        <Card icon="📦" label="Itens" value={items.length} color="green" />
+        <Card icon="📋" label="Cotações" value={quotes.length} color="amber" />
+        <Card
+          icon="🛒"
+          label="Compras"
+          value={purchases.length}
+          color="purple"
+        />
+      </div>
+
+      {/* Gráficos */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+          <h3 className="text-lg font-semibold text-white mb-4">
+            Cotações por Fornecedor
+          </h3>
+          <SupplierPieChart quotes={quotes} suppliers={suppliers} />
         </div>
-
-        {/* Conteúdo placeholder */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-10 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-green-500/20 flex items-center justify-center mx-auto mb-4">
-            <span className="text-3xl">✅</span>
-          </div>
-          <h2 className="text-xl font-bold text-white mb-2">
-            Login funcionando!
-          </h2>
-          <p className="text-slate-400 mb-4">
-            O frontend React está consumindo a API FastAPI com autenticação JWT.
-          </p>
-          <div className="inline-flex gap-6 text-sm">
-            <div className="text-slate-500">
-              Usuário:{" "}
-              <span className="text-white font-medium">{user?.email}</span>
-            </div>
-            <div className="text-slate-500">
-              Perfil:{" "}
-              <span className="text-white font-medium">{user?.role}</span>
-            </div>
-          </div>
-          <p className="text-slate-600 text-sm mt-6">
-            Dashboard completo será construído na Fase F2.
-          </p>
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+          <h3 className="text-lg font-semibold text-white mb-4">
+            Maiores Valores Cotados
+          </h3>
+          <ItemBarChart quotes={quotes} items={items} />
         </div>
       </div>
+
+      {/* Economia Potencial */}
+      {economia > 0 && (
+        <div className="bg-linear-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-2xl p-6">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">💰</span>
+            <div>
+              <h3 className="text-xl font-bold text-white">
+                Economia Potencial: R${" "}
+                {economia.toLocaleString("pt-BR", {
+                  minimumFractionDigits: 2,
+                })}
+              </h3>
+              <p className="text-green-400 text-sm">
+                {oppCount} oportunidades detectadas. Veja na aba Recomendações.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
