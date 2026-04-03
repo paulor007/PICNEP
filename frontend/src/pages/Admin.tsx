@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import Loading from "../components/ui/Loading";
-import { getUsers, createUser } from "../api/endpoints";
+import {
+  getUsers,
+  createUser,
+  deactivateUser,
+  deleteUser,
+} from "../api/endpoints";
 import type { User } from "../types";
 import { useAuth } from "../context/AuthContext";
 
@@ -28,6 +33,24 @@ export default function Admin() {
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  const handleDeactivate = async (userId: number, currentlyActive: boolean) => {
+    await deactivateUser(userId, !currentlyActive);
+    const updated = await getUsers();
+    setUsers(updated || []);
+  };
+
+  const handleDelete = async (userId: number, userName: string) => {
+    if (
+      !confirm(
+        `Remover o usuário "${userName}"? Esta ação não pode ser desfeita.`,
+      )
+    )
+      return;
+    await deleteUser(userId);
+    const updated = await getUsers();
+    setUsers(updated || []);
+  };
 
   useEffect(() => {
     getUsers().then((data) => {
@@ -202,6 +225,9 @@ export default function Admin() {
               <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">
                 Status
               </th>
+              <th className="text-right px-5 py-3 text-xs font-semibold text-slate-400 uppercase">
+                Ações
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -244,6 +270,31 @@ export default function Admin() {
                     >
                       {u.is_active ? "Ativo" : "Inativo"}
                     </span>
+                  </td>
+                  <td className="px-5 py-3.5 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      {/* Não mostrar ações no próprio admin logado */}
+                      {u.email !== user?.email && (
+                        <>
+                          <button
+                            onClick={() => handleDeactivate(u.id, u.is_active)}
+                            className={`text-xs px-3 py-1.5 rounded-lg transition ${
+                              u.is_active
+                                ? "bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
+                                : "bg-green-500/10 text-green-400 hover:bg-green-500/20"
+                            }`}
+                          >
+                            {u.is_active ? "Desativar" : "Reativar"}
+                          </button>
+                          <button
+                            onClick={() => handleDelete(u.id, u.name)}
+                            className="text-xs px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition"
+                          >
+                            Excluir
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );

@@ -144,8 +144,20 @@ def gerar_alertas_banco(db: Session) -> int:
     """
     oportunidades = detectar_oportunidades(db, limite=20)
     criados = 0
+    hoje = date.today()
+
+    # Buscar alertas já existentes hoje para evitar duplicatas
+    alertas_existentes = (
+        db.query(Alert.item_id, Alert.type)
+        .filter(Alert.created_at >= hoje)
+        .all()
+    )
+    existentes_set = {(a.item_id, a.type) for a in alertas_existentes}
 
     for opp in oportunidades:
+        chave = (opp.get("item_id"), opp["type"])
+        if chave in existentes_set:
+            continue  # Pular se alerta do mesmo tipo já existe para o item hoje
         alert = Alert(
             item_id=opp.get("item_id"),
             type=opp["type"],
@@ -154,6 +166,7 @@ def gerar_alertas_banco(db: Session) -> int:
             data={"economia_potencial": opp.get("economia_potencial", 0)},
         )
         db.add(alert)
+        existentes_set.add(chave) # Evitar duplicatas dentro do mesmo batch
         criados += 1
 
     db.commit()

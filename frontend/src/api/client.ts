@@ -1,27 +1,35 @@
 /**
  * Cliente HTTP para consumir a API FastAPI.
  *
- * - Guarda o JWT no localStorage
+ * - Guarda o JWT via safeStorage (localStorage com fallback in-memory)
  * - Adiciona Bearer token em toda requisição
  * - Se receber 401 (token expirado), redireciona para login
  */
 
+import { safeStorage } from "../lib/storage";
+
 class ApiClient {
+  private log(msg: string) {
+    if (import.meta.env.DEV) {
+      console.log(`[PICNEP] ${msg}`);
+    }
+  }
+
   private token: string | null = null;
 
   constructor() {
-    this.token = localStorage.getItem("picnep_token");
+    this.token = safeStorage.getItem("picnep_token");
   }
 
   setToken(token: string) {
     this.token = token;
-    localStorage.setItem("picnep_token", token);
+    safeStorage.setItem("picnep_token", token);
   }
 
   clearToken() {
     this.token = null;
-    localStorage.removeItem("picnep_token");
-    localStorage.removeItem("picnep_user");
+    safeStorage.removeItem("picnep_token");
+    safeStorage.removeItem("picnep_user");
   }
 
   private headers(): HeadersInit {
@@ -34,11 +42,9 @@ class ApiClient {
 
   async get<T>(endpoint: string): Promise<T | null> {
     try {
-      console.log(
-        `[API] GET ${endpoint} | Token: ${this.token ? "SIM" : "NÃO"}`,
-      );
+      this.log(`GET ${endpoint}`);
       const res = await fetch(endpoint, { headers: this.headers() });
-      console.log(`[API] ${endpoint} → ${res.status}`);
+      this.log(`${endpoint} → ${res.status}`);
       if (res.status === 401) {
         return null;
       }

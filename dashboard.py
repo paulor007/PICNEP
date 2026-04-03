@@ -24,11 +24,6 @@ def check_api():
         return False
 
 API_AVAILABLE = check_api()
-try:
-    r = requests.get("http://localhost:8000/health", timeout=2)
-    API_AVAILABLE = r.status_code == 200
-except Exception:
-    API_AVAILABLE = False
 
 if API_AVAILABLE:
     from services.api_client import PicnepClient
@@ -146,10 +141,20 @@ def get_suppliers():
         return data
     db = SessionLocal()
     try:
-        return [{"id": s.id, "nome": s.name, "cidade": s.city, "Estado": s.state,
-                 "prazo_medio_entrega": s.avg_delivery_days, "condicoes_pagamento": s.payment_terms,
-                 "pontuação_avaliação": s.rating_score, "ativo": s.is_active}
-                for s in db.query(Supplier).filter(Supplier.is_active.is_(True)).all()]
+        return [
+            {
+                "id": s.id,
+                "name": s.name,
+                "city": s.city,
+                "state": s.state,
+                "avg_delivery_days": s.avg_delivery_days,
+                "payment_terms": s.payment_terms,
+                "rating_score": s.rating_score,
+                "is_active": s.is_active,
+            }
+
+            for s in db.query(Supplier).filter(Supplier.is_active.is_(True)).all()
+        ]
     finally:
         db.close()
 

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
-import { api } from "../api/client";
+import { mockLogin } from "../api/mockApi";
+import { safeStorage } from "../lib/storage";
 
 interface AuthUser {
   name: string;
@@ -17,11 +18,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 function getInitialUser(): AuthUser | null {
-  const saved = localStorage.getItem("picnep_user");
-  const token = localStorage.getItem("picnep_token");
-  if (saved && token) {
-    return JSON.parse(saved);
-  }
+  safeStorage.removeItem("picnep_token");
+  safeStorage.removeItem("picnep_user");
   return null;
 }
 
@@ -30,20 +28,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading] = useState(false);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    const data = await api.loginRequest(email, password);
+    const data = await mockLogin(email, password);
     if (!data) return false;
 
-    api.setToken(data.access_token);
+    safeStorage.setItem("picnep_token", data.access_token);
     const authUser: AuthUser = { name: data.name, role: data.role, email };
     setUser(authUser);
-    localStorage.setItem("picnep_user", JSON.stringify(authUser));
+    safeStorage.setItem("picnep_user", JSON.stringify(authUser));
     return true;
   };
 
   const logout = () => {
-    api.clearToken();
+    safeStorage.removeItem("picnep_token");
+    safeStorage.removeItem("picnep_user");
     setUser(null);
-    localStorage.removeItem("picnep_user");
   };
 
   return (

@@ -97,13 +97,16 @@ export default function Recommendations() {
       {/* Lista de recomendações */}
       {recs.length > 0 ? (
         <div className="space-y-3 mb-10">
-          {recs.map((rec, i) => {
+          {recs.map((rec) => {
             if ("erro" in rec) return null;
             const cfg =
               actionConfig[rec.acao as keyof typeof actionConfig] ||
               actionConfig.pedir_cotacao;
             return (
-              <div key={i} className={`${cfg.bg} border rounded-2xl p-5`}>
+              <div
+                key={rec.item_id}
+                className={`${cfg.bg} border rounded-2xl p-5`}
+              >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-3">
                     <span className="text-xl">{cfg.icon}</span>

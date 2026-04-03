@@ -1,3 +1,4 @@
+import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
   Building2,
@@ -9,25 +10,25 @@ import {
   LogOut,
 } from "lucide-react";
 
-interface SidebarProps {
-  active: string;
-  onNavigate: (page: string) => void;
-}
-
-export default function Sidebar({ active, onNavigate }: SidebarProps) {
+export default function Sidebar() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const links = [
-    { id: "dashboard", icon: LayoutDashboard, label: "Visão Geral" },
-    { id: "recommendations", icon: Lightbulb, label: "Recomendações" },
-    { id: "alerts", icon: Bell, label: "Alertas" },
-    { id: "data", icon: Database, label: "Dados" },
+    { to: "/", icon: LayoutDashboard, label: "Visão Geral" },
+    { to: "/recommendations", icon: Lightbulb, label: "Recomendações" },
+    { to: "/alerts", icon: Bell, label: "Alertas" },
+    { to: "/data", icon: Database, label: "Dados" },
   ];
 
-  // Aba Admin só para admin
   if (user?.role === "admin") {
-    links.push({ id: "admin", icon: Users, label: "Admin" });
+    links.push({ to: "/admin", icon: Users, label: "Admin" });
   }
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   return (
     <aside className="w-64 bg-slate-900 border-r border-slate-800 min-h-screen flex flex-col">
@@ -48,20 +49,22 @@ export default function Sidebar({ active, onNavigate }: SidebarProps) {
       <nav className="flex-1 p-4 space-y-1">
         {links.map((link) => {
           const Icon = link.icon;
-          const isActive = active === link.id;
           return (
-            <button
-              key={link.id}
-              onClick={() => onNavigate(link.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition ${
-                isActive
-                  ? "bg-blue-600/15 text-blue-400 border border-blue-500/20"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800"
-              }`}
+            <NavLink
+              key={link.to}
+              to={link.to}
+              end={link.to === "/"}
+              className={({ isActive }) =>
+                `w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition ${
+                  isActive
+                    ? "bg-blue-600/15 text-blue-400 border border-blue-500/20"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800"
+                }`
+              }
             >
               <Icon className="w-5 h-5" />
               {link.label}
-            </button>
+            </NavLink>
           );
         })}
       </nav>
@@ -80,7 +83,7 @@ export default function Sidebar({ active, onNavigate }: SidebarProps) {
           </div>
         </div>
         <button
-          onClick={logout}
+          onClick={handleLogout}
           className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition"
         >
           <LogOut className="w-4 h-4" />

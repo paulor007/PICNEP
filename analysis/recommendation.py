@@ -87,23 +87,9 @@ def recomendar_item(db: Session, item_id: int) -> dict:
             "fornecedor_ideal": melhor["supplier_name"],
             "economia_potencial": round(economia, 2),
         }
-
-    elif variacao >= 10:
-        # Preço subiu 10%+ → renegociar
-        return {
-            "item_id": item_id,
-            "item_name": item.name,
-            "acao": "renegociar",
-            "motivo": (
-                f"Preço subiu {variacao:.0f}% desde última compra. "
-                f"Negocie com {melhor['supplier_name']} ou busque alternativas."
-            ),
-            "fornecedor_ideal": melhor["supplier_name"],
-            "economia_potencial": 0,
-        }
-
-    else:
-        # Preço estável
+    
+    elif variacao <= 5:
+        # Preço estável (-5% a +5%) → comprar normalmente
         return {
             "item_id": item_id,
             "item_name": item.name,
@@ -112,6 +98,35 @@ def recomendar_item(db: Session, item_id: int) -> dict:
                 f"Preço estável (variação {variacao:+.0f}%). "
                 f"Melhor custo real: {melhor['supplier_name']} "
                 f"(R$ {preco_atual:.2f}/un)."
+            ),
+            "fornecedor_ideal": melhor["supplier_name"],
+            "economia_potencial": 0,
+        }
+
+    elif variacao <= 10:
+        # Preço subiu entre 5% e 10% → esperar/avaliar
+        return {
+            "item_id": item_id,
+            "item_name": item.name,
+            "acao": "esperar",
+            "motivo": (
+                f"Preço subiu {variacao:.0f}% — acima do normal mas abaixo do crítico. "
+                f"Avalie se pode aguardar novas cotações. "
+                f"Melhor opção atual: {melhor['supplier_name']} (R$ {preco_atual:.2f}/un)."
+            ),
+            "fornecedor_ideal": melhor["supplier_name"],
+            "economia_potencial": 0,
+        }
+
+    else:
+        # Preço subiu 10%+ → renegociar urgente
+        return {
+            "item_id": item_id,
+            "item_name": item.name,
+            "acao": "renegociar",
+            "motivo": (
+                f"Preço subiu {variacao:.0f}% desde última compra! "
+                f"Negocie com {melhor['supplier_name']} ou busque alternativas."
             ),
             "fornecedor_ideal": melhor["supplier_name"],
             "economia_potencial": 0,

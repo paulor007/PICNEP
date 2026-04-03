@@ -1,8 +1,9 @@
 """Cliente HTTP para consumir a API FastAPI a partir do Dashboard."""
 
+import os
 import requests
 
-API_URL = "http://localhost:8000"
+API_URL = os.getenv("API_URL", "http://localhost:8000")
 
 
 class PicnepClient:

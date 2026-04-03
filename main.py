@@ -16,6 +16,7 @@ Imports:
 - uvicorn: servidor ASGI que roda o FastAPI. ASGI é o protocolo
   assíncrono do Python (evolução do WSGI usado por Flask/Django).
 """
+import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -37,12 +38,14 @@ app = FastAPI(
 )
 
 # CORS
+ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Em produção, restringir
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 # ── Registrar rotas ──

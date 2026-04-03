@@ -38,11 +38,14 @@ def list_items(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
     category: str | None = Query(None, description="Filtrar por categoria"),
+    active_only: bool = Query(True, description="Retornar apenas itens ativos"),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     """Lista itens. Requer: autenticado."""
     query = db.query(Item)
+    if active_only:
+        query = query.filter(Item.is_active_(True))
     if category:
         query = query.filter(Item.category == category)
     return query.offset(skip).limit(limit).all()
@@ -87,9 +90,16 @@ def delete_item(
     db: Session = Depends(get_db),
     user: User = Depends(require_role("admin")),
 ):
-    """Remove item. Requer: admin."""
+    """
+    Remove item. Requer: admin.
+    
+    Por que soft delete e não hard delete?
+    Itens têm cotações e compras vinculadas na tabela quotes e purchases
+    (via ForeignKey). Se apagar o item fisicamente, o banco rejeita
+    a operação com erro de FK violation. O soft delete preserva o histórico.
+    """
     item = db.query(Item).filter(Item.id == item_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Item não encontrado")
-    db.delete(item)
+    item.is_active = False
     db.commit()

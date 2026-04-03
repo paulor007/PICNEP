@@ -24,7 +24,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from api.deps import get_db
+from api.deps import get_db, get_current_user
 from models.user import User
 from schemas.auth import RegisterRequest, LoginRequest, TokenResponse, UserResponse
 from core.security import hash_password, verify_password, create_access_token
@@ -36,11 +36,8 @@ router = APIRouter(prefix="/auth", tags=["Autenticação"])
 def register(data: RegisterRequest, db: Session = Depends(get_db)):
     """
     Cria nova conta de usuário.
-
-    Validações:
-    - Email não pode já existir no banco
-    - Role deve ser admin, gestor ou analista
-    - Senha é transformada em hash antes de salvar
+    Registro público só permite role 'analista'.
+    Para criar admin ou gestor, use o endpoint /auth/register-admin (requer auth).
     """
     # Verificar se email já existe
     existing = db.query(User).filter(User.email == data.email).first()
@@ -50,19 +47,50 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
             detail="Email já cadastrado"
         )
 
-    # Validar role
-    valid_roles = {"admin", "gestor", "analista"}
-    if data.role not in valid_roles:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Role inválido. Use: {', '.join(valid_roles)}"
-        )
-
-    # Criar usuário com senha hasheada
+    # Registro público = sempre analista
     user = User(
         name=data.name,
         email=data.email,
         password_hash=hash_password(data.password),  # NUNCA salvar texto puro
+        role="analista",
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    return user
+
+@router.post("/register-admin", response_model=UserResponse, status_code=201)
+def register_admin(
+    data: RegisterRequest,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Cria usuário com qualquer role — requer autenticação de admin."""
+    if current_user.role != "admin":
+            raise HTTPException(
+                status_code=403,
+                detail="Apenas administradores podem criar usuários"
+            ) 
+   
+    existing = db.query(User).filter(User.email == data.email).first()
+    if existing:
+        raise HTTPException(
+            status_code=400,
+            detail="Email já cadastrado"
+        )
+
+    valid_roles = ["admin", "gestor", "analista"]
+    if data.role not in valid_roles:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Role inválida. Escolha entre: {', '.join(valid_roles)}"
+        )
+    
+    user = User(
+        name=data.name,
+        email=data.email,
+        password_hash=hash_password(data.password),
         role=data.role,
     )
     db.add(user)

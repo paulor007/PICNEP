@@ -11,7 +11,7 @@ O histórico permite responder:
 - "Estou pagando mais caro que antes?"
 """
 
-from sqlalchemy import Column, Integer, Float, String, Date, DateTime, ForeignKey, func
+from sqlalchemy import Column, Integer, Numeric, String, Date, DateTime, ForeignKey, func
 from sqlalchemy.orm import relationship
 
 from core.database import Base
@@ -26,16 +26,16 @@ class Purchase(Base):
     quote_id = Column(Integer, ForeignKey("quotes.id"), nullable=True)  # Opcional: qual cotação virou compra
     date = Column(Date, nullable=False)
     quantity = Column(Integer, nullable=False)
-    unit_price = Column(Float, nullable=False)
-    freight = Column(Float, default=0.0)
-    total_cost = Column(Float, nullable=False)  # (unit_price * quantity) + freight
+    unit_price = Column(Numeric(12, 4), nullable=False)
+    freight = Column(Numeric(12, 4), default=0.0)
+    total_cost = Column(Numeric(12, 4), nullable=False)  # (unit_price * quantity) + freight
     payment_term = Column(String(50), default="à vista")
     status = Column(String(20), default="concluida")  # concluida, pendente, cancelada
     notes = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relacionamentos
-    item = relationship("Item")
+    item = relationship("Item", back_populates="purchases")
     supplier = relationship("Supplier", back_populates="purchases")
 
     def __repr__(self):

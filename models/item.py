@@ -10,7 +10,7 @@ min_stock: estoque mínimo. Quando chega perto, o sistema pode alertar.
 unit: unidade de medida (kg, un, m², saco, etc).
 """
 
-from sqlalchemy import Column, Integer, String, Float, DateTime, func
+from sqlalchemy import Column, Integer, String, Numeric, Boolean, DateTime, func
 from sqlalchemy.orm import relationship
 
 from core.database import Base
@@ -25,7 +25,8 @@ class Item(Base):
     unit = Column(String(20), nullable=False, default="un")  # un, kg, m², saco, litro
     description = Column(String(255), nullable=True)
     min_stock = Column(Integer, default=0)
-    current_avg_price = Column(Float, default=0.0)  # Atualizado pelo engine
+    current_avg_price = Column(Numeric(12, 4), default=0.0)  # Atualizado pelo engine
+    is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relacionamentos

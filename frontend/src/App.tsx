@@ -9,29 +9,6 @@ import Alerts from "./pages/Alerts";
 import Data from "./pages/Data";
 import Admin from "./pages/Admin";
 
-function AppContent() {
-  return (
-    <Layout>
-      {(activePage) => {
-        switch (activePage) {
-          case "dashboard":
-            return <Dashboard />;
-          case "recommendations":
-            return <Recommendations />;
-          case "alerts":
-            return <Alerts />;
-          case "data":
-            return <Data />;
-          case "admin":
-            return <Admin />;
-          default:
-            return <Dashboard />;
-        }
-      }}
-    </Layout>
-  );
-}
-
 export default function App() {
   return (
     <BrowserRouter>
@@ -42,10 +19,16 @@ export default function App() {
             path="/"
             element={
               <ProtectedRoute>
-                <AppContent />
+                <Layout />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<Dashboard />} />
+            <Route path="recommendations" element={<Recommendations />} />
+            <Route path="alerts" element={<Alerts />} />
+            <Route path="data" element={<Data />} />
+            <Route path="admin" element={<Admin />} />
+          </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
